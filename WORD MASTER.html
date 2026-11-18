@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>WORD MASTER</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--tile:#f3f4f6;--ink:#212733;--sub:#8b919d;--line:#e4e7ec;--accent:#212733;--accent-ink:#fff;--ok:#e5383b;--ng:#2f6fed;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101216;--card:#1a1d23;--tile:#23272e;--ink:#eceef2;--sub:#8b92a0;--line:#2b2f37;--accent:#eceef2;--accent-ink:#13161b;--ok:#ff6b6b;--ng:#6c9bff;color-scheme:dark}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"SF Pro Text","Hiragino Sans","Hiragino Kaku Gothic ProN",system-ui,sans-serif;line-height:1.55}
+main{max-width:760px;margin:0 auto;padding:22px 16px 40px}
+.hidden{display:none!important}
+.top{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+.cap{font-size:.66rem;letter-spacing:.2em;color:var(--sub);text-transform:uppercase}
+h1{margin:2px 0 0;font-size:1.5rem;letter-spacing:-.01em;line-height:1.1}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.tile{background:var(--tile);border-radius:16px;padding:12px 14px}
+.tile small{display:block;color:var(--sub);font-size:.72rem}
+.tile b{font-size:1.5rem;line-height:1.2}
+button{font:inherit;font-size:.85rem;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:16px;padding:12px 16px;min-height:48px;cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button:disabled{opacity:.45}
+button.small{min-height:36px;padding:6px 14px;font-size:.78rem}
+.full{width:100%;margin-top:10px}
+.tabs,.two{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.two{grid-template-columns:1fr 1fr;margin:0}
+.tabs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.center{text-align:center;padding:22px 16px}
+.cap2{color:var(--sub);font-size:.75rem}
+.start{border:2px solid var(--accent)}
+.pick{display:grid;gap:10px;margin:4px 0 2px}
+.pick button{text-align:left}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choices button{min-height:68px;font-size:1.25rem;font-weight:700}
+.choices button.right{border:2.5px solid var(--ok)}
+.choices button.bad{border:2.5px solid var(--ng)}
+#choiceCard{display:none}
+body.choice #choiceCard{display:block}
+body.choice .card:has(#pad){display:none}
+.center{position:relative}
+#quit{display:none;position:absolute;left:12px;top:12px}
+.testing #quit{display:block}
+.testing .top,.testing .stats,.testing .tabs,.testing .start,.testing #note{display:none}
+.testing main{padding-top:12px}
+.testing .center{padding:14px 16px}
+.testing .prompt{font-size:1.7rem;margin:2px 0}
+.testing .hint{min-height:1.6rem;font-size:1.3rem}
+.startTitle{font-size:1.2rem;font-weight:800;margin-bottom:2px}
+.prompt{font-size:1.9rem;font-weight:800;letter-spacing:-.01em;margin:8px 0 4px;line-height:1.25}
+.hint{font-size:1.6rem;font-weight:700;font-family:ui-monospace,Menlo,monospace;color:var(--sub);min-height:2.1rem}
+.head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.head .r{display:flex;gap:8px}
+canvas{display:block;width:100%;height:auto;background:#fff;border:1.5px dashed #b9c0cc;border-radius:16px;touch-action:none}
+.note{color:var(--sub);font-size:.75rem;margin-top:8px}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+textarea,input[type=text]{-webkit-user-select:text;user-select:text}
+canvas{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.fb{margin-top:12px;font-size:1rem}
+.ok{color:var(--ok);font-weight:700}.ng{color:var(--ng);font-weight:700}
+.fb .ok,.fb .ng{font-size:1.5rem}
+.fb .big{font-size:2rem}
+#mark{position:fixed;inset:0;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;pointer-events:none;z-index:50;opacity:0}
+#mark.wrong{background:rgba(0,0,0,.3)}
+#mark.show.wrong{animation-duration:3s}
+.ans{background:var(--card);color:var(--ink);padding:8px 24px;border-radius:20px;font-size:clamp(2.2rem,10vw,4.2rem);font-weight:800;letter-spacing:.02em;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#mark svg{width:min(62vmin,340px);height:min(62vmin,340px);filter:drop-shadow(0 8px 24px rgba(0,0,0,.25))}
+#mark.show{animation:markpop 1.1s ease-out forwards}
+@keyframes markpop{0%{opacity:0;transform:scale(.4)}18%{opacity:1;transform:scale(1.08)}30%{transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:scale(1)}}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+select,input[type=text],textarea{font:inherit;font-size:1rem;border:1px solid var(--line);border-radius:14px;background:var(--tile);color:var(--ink);padding:10px 12px}
+select{flex:1;min-width:0;min-height:48px}
+input[type=text]{flex:1;min-width:0;min-height:48px}
+textarea{width:100%;min-height:260px;margin-top:10px}
+.chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:.9rem}
+.chk input{width:22px;height:22px}
+.sec{font-weight:700;margin:0 0 8px}
+.score{font-size:2rem;font-weight:800}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+td,th{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;font-size:.9rem}
+.miss-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.miss-item button{min-height:36px;padding:4px 12px;font-size:.78rem}
+</style>
+</head>
+<body>
+<main>
+<header class="top">
+  <div><div class="cap">Vocabulary Training</div><h1>WORD MASTER</h1></div>
+  <div class="cap">Private Edition</div>
+</header>
+
+<section class="card stats">
+  <div class="tile"><small>登録単語</small><b id="sWords">0</b></div>
+  <div class="tile"><small>正解</small><b id="sOk">0</b></div>
+  <div class="tile"><small>正答率</small><b id="sRate">—</b></div>
+</section>
+
+<nav class="tabs">
+  <button data-tab="test" class="on">テスト</button>
+  <button data-tab="books">単語帳</button>
+  <button data-tab="stats">成績</button>
+</nav>
+
+<div id="tab-test">
+  <section class="card start">
+    <div class="startTitle" id="startTitle">ここから始めよう！</div>
+    <div class="cap2" id="startSub" style="margin-bottom:12px">ボタンを押すと、単語帳を選ぶ画面が出ます</div>
+    <div id="pickBox" class="hidden"></div>
+    <div class="two">
+      
+      <button class="primary" id="startNormal">手書きテスト</button>
+      <button class="primary" id="startChoice">四択テスト</button>
+      <button id="startReview" style="grid-column:1/-1">間違えた単語を復習</button>
+    </div>
+  </section>
+  <section class="card center">
+    <button class="small" id="quit">やめる</button>
+    <div class="cap2">日本語を見て英単語を書こう</div>
+    <div class="prompt" id="prompt">テストを始めよう</div>
+    <div class="hint" id="hint"></div>
+    <div class="cap2" id="sub">準備完了</div>
+  </section>
+  <section class="card" id="choiceCard">
+    <div class="choices" id="choices"></div>
+    <button class="primary full hidden" id="cNext">次へ</button>
+  </section>
+  <section class="card">
+    <div class="head"><b>手書き入力</b><div class="r"><button class="small" id="undo">1画戻す</button><button class="small" id="clear">消去</button></div></div>
+    <canvas id="pad" width="1000" height="340"></canvas>
+    <div class="note" id="note">枠内に英単語を大きく書いてください。Apple Pencilで書けます。採点にはClaudeを使います（初回に許可の確認が出ます）。</div>
+    <div class="fb" id="fb"></div>
+    <div class="two" id="actRow" style="margin-top:10px"><button class="primary" id="grade">手書きを読み取る</button>
+    <button id="reveal">答えを見る</button></div>
+    
+    <div class="two hidden" id="afterRow" style="margin-top:10px;grid-template-columns:repeat(3,1fr)">
+      <button id="override">正解にする</button>
+      <button id="markWrong">不正解にする</button>
+      <button class="primary" id="next">次へ</button>
+    </div>
+  </section>
+</div>
+
+<div id="tab-books" class="hidden">
+  <section class="card">
+    <div class="row"><select id="bookSel"></select><button id="addBook">＋追加</button><button id="delBook">削除</button></div>
+    <div class="row hidden" id="newBookRow" style="margin-top:10px"><input type="text" id="newName" placeholder="単語帳の名前（例: ユメタン Unit 7）"><button class="primary" id="newOk">作成</button></div>
+    <p class="note">1行に「英単語,日本語の意味」の形式で書きます。変更は自動で保存されます。</p>
+    <textarea id="words" spellcheck="false"></textarea>
+    <label class="chk"><input type="checkbox" id="hintOn" checked>頭文字のヒントを表示する</label>
+    <label class="chk"><input type="checkbox" id="selfOn">自己採点モード（Claudeを使わず、自分で○×を選ぶ）</label>
+  </section>
+</div>
+
+<div id="tab-stats" class="hidden">
+  <section class="card">
+    <p class="sec">前回のテスト</p>
+    <div id="noLast" class="note">まだテストをしていません。</div>
+    <div id="lastBox" class="hidden">
+      <div class="score" id="lastScore"></div>
+      <table id="tbl"></table>
+      <button class="full" id="retryMiss">間違えた単語だけ再テスト</button>
+    </div>
+  </section>
+  <section class="card">
+    <p class="sec">復習リスト</p>
+    <div class="note" id="allDueNote" style="margin:0 0 10px"></div>
+    <div id="reviewBox"></div>
+  </section>
+</div>
+</main>
+<div id="mark" aria-hidden="true"></div>
+
+<script>
+const DEFAULT_WORDS = [
+"physician,内科医","organ,臓器","circulation,循環","hardship,苦難","removal,除去","span,期間","wit,機知","supplement,補足","cough,せき","certificate,証明書",
+"nutrition,栄養分","particle,微粒子","shelter,避難所","calamity,災難","donation,寄付","prescription,処方箋","specimen,見本","plague,疫病","stereotype,固定観念","might,力",
+"consensus,一致","skeleton,骨格","toxin,毒素","scar,傷跡","agony,苦痛","groan,うめき声","oppression,抑圧","lung,肺","distress,悩み","fiber,繊維",
+"bacteria,細菌","virus,病原体","surgery,手術","therapy,治療","precaution,予防策","prevention,防止","provision,供給","surgeon,外科医","thirst,渇き","tumor,腫瘍",
+"adaptation,順応","protein,たんぱく質","reference,言及","critic,評論家","leaflet,小冊子","exhaust,〜を疲れさせる","acquaint,〜に知らせる","refresh,〜を元気づける","swallow,〜を飲み込む","lower,〜を減じる",
+"overwhelm,〜を押しつぶす","transmit,〜を送る","rotate,〜を回転させる","bind,〜を縛る","inspect,〜を点検する","extract,〜を抽出する","assess,〜を評価する","shiver,身震いする","bleed,出血する","sniff,〜のにおいを嗅ぐ",
+"sneeze,くしゃみをする","penetrate,〜を貫通する","pant,荒い息をする","frown,眉をひそめる","scatter,〜をまき散らす","detect,〜を見つける","plunge,〜を突っ込む","torture,〜をひどく苦しめる","stoop,かがむ","drain,〜を排出させる",
+"pierce,〜を突き通す","diagnose,〜を診断する","devise,〜を工夫する","hug,〜を抱き締める","choke,窒息する","board,〜に乗り込む","revive,〜を生き返らせる","weaken,〜を弱くする","regain,〜を取り戻す","rinse,〜をゆすぐ",
+"weary,疲れ切った","uneasy,心配な","dizzy,目が回る","disabled,身体障がいのある","excessive,過度の","pale,青白い","deadly,致命的な","lean,やせた","bald,はげた","prompt,即座の",
+"innate,生まれながらの","valid,有効な","insane,正気でない","abrupt,急の","immune,免疫の","sanitary,衛生の","credible,信じられる","vulnerable,傷つきやすい","infectious,伝染性の","terminal,末期の"
+].join("\n");
+const $ = id => document.getElementById(id);
+let list = [], idx = 0, results = [], graded = false, active = false, sample = null;
+
+(async () => {
+  try { sample = await claude.use("sample"); } catch (e) { sample = null; }
+  applyMode();
+})();
+
+// ---- tabs ----
+function tab(n) {
+  ["test", "books", "stats"].forEach(t => {
+    $("tab-" + t).classList.toggle("hidden", t !== n);
+    document.querySelector('[data-tab="' + t + '"]').classList.toggle("on", t === n);
+  });
+  if (n === "stats") renderReview(); else refreshReviewBtn();
+}
+document.querySelectorAll(".tabs button").forEach(b => { b.onclick = () => tab(b.dataset.tab); });
+
+// ---- word books ----
+const UNIT7_WORDS = [
+"globe,地球","cosmos,宇宙","mineral,鉱物","volcano,火山","core,中心","breeze,そよ風","ape,類人猿","biology,生物学","clay,粘土","refuge,避難",
+"hemisphere,半球","microscope,顕微鏡","drought,日照り","radioactivity,放射能","bloom,花","prey,えじき","frost,霜","ingredient,成分","barometer,気圧計","comet,彗星",
+"astronomy,天文学","column,円柱","botany,植物学","ecology,生態学","equator,赤道","heap,堆積","radius,半径","evaporation,蒸発","dimension,寸法","geometry,幾何学",
+"ray,光線","weed,雑草","chemistry,化学","carbon,炭素","anthropology,人類学","molecule,分子","existence,存在","galaxy,銀河","glacier,氷河","preservation,保存",
+"radiation,放射","rainfall,降雨","reptile,は虫類","stalk,軸","typhoon,台風","roar,ほえる","crack,砕ける","extinguish,～を消す","hatch,～をふ化させる","soak,～を浸す",
+"conserve,～を保護する","refine,～を精製する","convert,～を変える","emit,～を出す","perish,死ぬ","sharpen,～を鋭くする","dissolve,～を溶かす","dispose,処分する","distort,～をゆがめる","deduce,～を推定する",
+"reap,～を収穫する","leap,跳ねる","classify,～を分類する","generate,～を生み出す","creep,はう","drip,したたり落ちる","emerge,浮かび上がる","sow,～をまく","sparkle,輝く","yield,～を産出する",
+"lick,～をなめる","overflow,氾濫する","revolve,回転する","devote,～をささげる","scan,～を細かく調べる","awful,すさまじい","vertical,垂直の","solar,太陽の","extinct,死に絶えた","damp,湿気のある",
+"dreadful,非常に恐ろしい","ripe,熟した","tame,飼いならされた","dim,薄暗い","secondary,第2の","inherent,本来備わっている","singular,1つだけの","moderate,適度の","faint,かすかな","innumerable,おびただしい",
+"spectacular,壮観な","transparent,透明な","fierce,荒々しい","dense,濃密な","compound,合成の","atomic,原子力による","genetic,遺伝子の","dual,2の","antarctic,南極の","prominent,卓越した"
+].join("\n");
+const BUILTIN = [
+  { id: "unit6", name: "ユメタン Unit 6", text: DEFAULT_WORDS },
+  { id: "unit7", name: "ユメタン Unit 7", text: UNIT7_WORDS }
+];
+let books = [], curId = "unit6";
+function loadBooks() {
+  try { books = JSON.parse(localStorage.getItem("wwt-books") || "null"); } catch (e) { books = null; }
+  if (!Array.isArray(books)) {
+    books = [];
+    try { const old = localStorage.getItem("wwt-words2"); if (old) books.push({ id: "unit6", name: "ユメタン Unit 6", text: old }); } catch (e) {}
+  }
+  BUILTIN.forEach(b => { if (!books.find(x => x.id === b.id)) books.push({ ...b }); });
+  try { curId = localStorage.getItem("wwt-cur") || books[0].id; } catch (e) { curId = books[0].id; }
+  if (!books.find(b => b.id === curId)) curId = books[0].id;
+}
+function saveBooks() { try { localStorage.setItem("wwt-books", JSON.stringify(books)); localStorage.setItem("wwt-cur", curId); } catch (e) {} }
+function curBook() { return books.find(b => b.id === curId); }
+function missKey(id = curId) { return id === "unit6" ? "wwt-miss" : "wwt-miss-" + id; }
+function renderBooks() {
+  const sel = $("bookSel"); sel.innerHTML = "";
+  books.forEach(b => { const o = document.createElement("option"); o.value = b.id; o.textContent = b.name; sel.appendChild(o); });
+  sel.value = curId; $("words").value = curBook().text;
+  $("words").placeholder = "英単語,日本語の意味\napple,りんご\nlibrary,図書館";
+  refreshStats();
+}
+$("words").oninput = () => { curBook().text = $("words").value; saveBooks(); refreshStats(); };
+$("bookSel").onchange = () => { curId = $("bookSel").value; saveBooks(); active = false; $("words").value = curBook().text; refreshStats(); idleCard(); renderReview(); };
+$("addBook").onclick = () => { $("newBookRow").classList.toggle("hidden"); $("newName").focus(); };
+$("newOk").onclick = () => {
+  const name = $("newName").value.trim();
+  if (!name) return;
+  const b = { id: "b" + Date.now(), name, text: "" };
+  books.push(b); curId = b.id; saveBooks(); active = false;
+  $("newName").value = ""; $("newBookRow").classList.add("hidden");
+  renderBooks(); idleCard(); renderReview(); $("words").focus();
+};
+$("delBook").onclick = () => {
+  const b = $("delBook");
+  if (books.length < 2) { b.textContent = "最後の1冊は削除できません"; setTimeout(() => { b.textContent = "削除"; }, 2000); return; }
+  if (!b.dataset.armed) {
+    b.dataset.armed = "1"; b.textContent = "もう一度押すと削除";
+    setTimeout(() => { delete b.dataset.armed; b.textContent = "削除"; }, 3000); return;
+  }
+  delete b.dataset.armed; b.textContent = "削除";
+  try { localStorage.removeItem(missKey()); } catch (e) {}
+  books = books.filter(x => x.id !== curId); curId = books[0].id; saveBooks(); active = false;
+  renderBooks(); idleCard(); renderReview();
+};
+try { $("hintOn").checked = localStorage.getItem("wwt-hint") !== "0"; } catch (e) {}
+$("hintOn").onchange = () => { try { localStorage.setItem("wwt-hint", $("hintOn").checked ? "1" : "0"); } catch (e) {} };
+
+// ---- stats ----
+const statKey = (id = curId) => "wwt-stat-" + id;
+function getStat(id) { try { return JSON.parse(localStorage.getItem(statKey(id)) || "{}"); } catch (e) { return {}; } }
+function addStat(ok, total, id) {
+  const s = getStat(id); s.ok = (s.ok || 0) + ok; s.total = (s.total || 0) + total;
+  try { localStorage.setItem(statKey(id), JSON.stringify(s)); } catch (e) {}
+  refreshStats();
+}
+function refreshStats() {
+  const s = getStat();
+  $("sWords").textContent = parse(curBook().text).length;
+  $("sOk").textContent = s.ok || 0;
+  $("sRate").textContent = s.total ? Math.round(100 * s.ok / s.total) + "%" : "—";
+}
+
+// ---- drawing (Apple Pencil only) ----
+const cv = $("pad"), ctx = cv.getContext("2d");
+let strokes = [], cur = null;
+function redraw() {
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.strokeStyle = "#111"; ctx.lineWidth = 7; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  for (const s of strokes) {
+    ctx.beginPath();
+    s.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+    if (s.length === 1) ctx.lineTo(s[0].x + .1, s[0].y);
+    ctx.stroke();
+  }
+}
+function pt(e) {
+  const r = cv.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * cv.width / r.width, y: (e.clientY - r.top) * cv.height / r.height };
+}
+cv.addEventListener("pointerdown", e => {
+  if (graded || !active) return;
+  if (e.pointerType !== "pen") { if (!strokes.length) $("fb").textContent = "Apple Pencilで書いてください。"; return; }
+  try { getSelection().removeAllRanges(); } catch (err) {}
+  e.preventDefault(); cv.setPointerCapture(e.pointerId);
+  cur = [pt(e)]; strokes.push(cur); redraw();
+});
+cv.addEventListener("pointermove", e => {
+  if (!cur) return;
+  e.preventDefault();
+  (e.getCoalescedEvents ? e.getCoalescedEvents() : [e]).forEach(ev => cur.push(pt(ev)));
+  redraw();
+});
+["pointerup", "pointercancel"].forEach(t => cv.addEventListener(t, () => { cur = null; }));
+// 書き中に文字選択や長押しメニューが出ないようにする
+["selectstart", "contextmenu", "dragstart", "gesturestart"].forEach(t => cv.addEventListener(t, e => e.preventDefault()));
+["touchstart", "touchmove"].forEach(t => cv.addEventListener(t, e => e.preventDefault(), { passive: false }));
+document.addEventListener("selectstart", e => {
+  const el = e.target && e.target.nodeType === 1 ? e.target : (e.target && e.target.parentElement);
+  if (!el || !el.closest("textarea,input")) e.preventDefault();
+});
+$("undo").onclick = () => { if (!graded) { strokes.pop(); redraw(); } };
+$("clear").onclick = () => { if (!graded) { strokes = []; redraw(); } };
+
+// ---- quiz ----
+function parse(text) {
+  return text.split("\n").map(l => l.trim()).filter(Boolean).map(l => {
+    const i = l.search(/[,，\t]/);
+    return i < 0 ? null : { en: l.slice(0, i).trim(), ja: l.slice(i + 1).trim() };
+  }).filter(w => w && w.en && w.ja);
+}
+function setBtns() {
+  $("grade").disabled = $("reveal").disabled = !active || graded;
+  document.body.classList.toggle("testing", active);
+  document.body.classList.toggle("choice", active && mode === "choice");
+  $("startTitle").textContent = active ? "別のテストを始める" : "ここから始めよう！";
+}
+function idleCard() {
+  $("prompt").textContent = "↑ 上のボタンでスタート"; $("hint").textContent = ""; $("sub").textContent = "準備完了";
+  $("fb").textContent = ""; $("afterRow").classList.add("hidden"); $("actRow").classList.remove("hidden"); pending = false; $("next").disabled = false; strokes = []; redraw(); setBtns();
+}
+function shuffle(a) {
+  const r = a.slice();
+  for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; }
+  return r;
+}
+// 出題範囲：全部 / ランダム20語 / 20語ごとの区切り
+const CHUNK = 20;
+function renderRange() {
+  const n = parse(curBook().text).length, sel = $("rangeSel"), prev = sel.value;
+  sel.innerHTML = "";
+  const add = (v, t) => { const o = document.createElement("option"); o.value = v; o.textContent = t; sel.appendChild(o); };
+  add("all", "出題範囲：全部（" + n + "語）");
+  if (n > CHUNK) add("rand", "出題範囲：ランダム" + CHUNK + "語");
+  for (let s = 0; s < n; s += CHUNK) add("c" + s, "出題範囲：" + (s + 1) + "〜" + Math.min(s + CHUNK, n) + "番目");
+  sel.value = [...sel.options].some(o => o.value === prev) ? prev : "all";
+}
+function pickRange() {
+  const w = parse(curBook().text), v = $("rangeSel").value;
+  if (v === "rand") return shuffle(w).slice(0, CHUNK);
+  if (v.startsWith("c")) { const s = +v.slice(1); return w.slice(s, s + CHUNK); }
+  return w;
+}
+// 全単語帳の復習
+function allDue() {
+  const out = [];
+  books.forEach(b => getMiss(b.id).filter(isDue).forEach(w => out.push({ en: w.en, ja: w.ja, bid: b.id })));
+  return out;
+}
+function refreshReviewBtn() {
+  const per = books.map(b => ({ n: b.name.replace("ユメタン ", ""), c: getMiss(b.id).filter(isDue).length }));
+  const total = per.reduce((s, x) => s + x.c, 0);
+  $("startReview").textContent = "間違えた単語を復習（" + total + "語）";
+  $("allDueNote").textContent = "全単語帳の復習の時間：" + total + "語　" + per.map(x => x.n + " " + x.c + "語").join(" / ");
+}
+let mode = "write", pickMode = "write";
+// ---- 四択テスト（日本語→英単語） ----
+function buildChoices() {
+  const w = list[idx], book = books.find(b => b.id === w.bid) || curBook();
+  const pool = parse(book.text).filter(x => x.en !== w.en);
+  if (pool.length < 3) books.forEach(b => parse(b.text).forEach(x => { if (x.en !== w.en && !pool.some(p => p.en === x.en)) pool.push(x); }));
+  const opts = shuffle([w, ...shuffle(pool).slice(0, 3)]);
+  const box = $("choices"); box.innerHTML = "";
+  $("cNext").classList.add("hidden");
+  opts.forEach(o => {
+    const b = document.createElement("button"); b.textContent = o.en;
+    b.onclick = () => pickChoice(o, b);
+    box.appendChild(b);
+  });
+}
+function pickChoice(o, btn) {
+  if (graded) return;
+  const w = list[idx], ok = o.en === w.en;
+  record(ok, o.en);
+  [...$("choices").children].forEach(b => { if (b.textContent === w.en) b.classList.add("right"); });
+  if (!ok) btn.classList.add("bad");
+  $("cNext").textContent = idx + 1 < list.length ? "次へ" : "結果を見る";
+  $("cNext").classList.remove("hidden");
+}
+$("cNext").onclick = () => { if (idx + 1 < list.length) { idx++; loadWord(); } else finish(); };
+function begin(words, label, m) {
+  tab("test");
+  if (!words.length) { idleCard(); $("sub").textContent = label || "対象の単語がありません"; return; }
+  list = shuffle(words.map(w => ({ bid: curId, ...w }))); idx = 0; results = []; active = true; mode = m || "write"; loadWord(); window.scrollTo(0, 0);
+}
+function loadWord() {
+  graded = false; strokes = []; redraw();
+  $("prompt").textContent = list[idx].ja;
+  $("hint").textContent = (mode === "write" && $("hintOn").checked) ? list[idx].en.charAt(0) : "";
+  $("sub").textContent = (idx + 1) + " / " + list.length;
+  $("fb").textContent = ""; $("afterRow").classList.add("hidden"); $("actRow").classList.remove("hidden"); pending = false; $("next").disabled = false; $("override").classList.add("hidden"); if (mode === "choice") buildChoices();
+  setBtns();
+}
+$("quit").onclick = () => { active = false; idleCard(); };
+function selectBook(id) {
+  curId = id; saveBooks(); $("bookSel").value = id; $("words").value = curBook().text; refreshStats(); renderReview();
+}
+// 「通常テスト」→ 単語帳を選ぶ → 出題範囲を選ぶ → 開始
+function showPicker(step, bid) {
+  const box = $("pickBox"), row = $("startNormal").parentElement;
+  box.innerHTML = "";
+  const home = !step;
+  box.classList.toggle("hidden", home); row.classList.toggle("hidden", !home); $("startSub").classList.toggle("hidden", !home);
+  if (home) return;
+  const back = document.createElement("button"); back.className = "small"; back.textContent = "← もどる"; back.style.marginBottom = "10px";
+  const title = document.createElement("div"); title.className = "sec";
+  const list = document.createElement("div"); list.className = "pick";
+  const mk = (t, f, off) => { const b = document.createElement("button"); b.textContent = t; b.disabled = !!off; b.onclick = f; list.appendChild(b); };
+  if (step === 1) {
+    title.textContent = "どの単語帳をやる？";
+    back.onclick = () => showPicker(0);
+    books.forEach(b => { const n = parse(b.text).length; mk(b.name + "（" + n + "語）", () => showPicker(2, b.id), !n); });
+  } else {
+    const b = books.find(x => x.id === bid), w = parse(b.text), n = w.length;
+    title.textContent = b.name + "：出題範囲は？";
+    back.onclick = () => showPicker(1);
+    const go = f => () => { selectBook(bid); showPicker(0); begin(f(), "この単語帳に単語がありません", pickMode); };
+    mk("全部（" + n + "語）", go(() => w));
+    if (n > CHUNK) mk("ランダム" + CHUNK + "語", go(() => shuffle(w).slice(0, CHUNK)));
+    for (let s = 0; s < n; s += CHUNK) mk((s + 1) + "〜" + Math.min(s + CHUNK, n) + "番目", go(() => w.slice(s, s + CHUNK)));
+  }
+  box.append(back, title, list);
+}
+$("startNormal").onclick = () => { pickMode = "write"; showPicker(1); };
+$("startChoice").onclick = () => { pickMode = "choice"; showPicker(1); };
+$("startReview").onclick = () => begin(allDue(), "復習の時間の単語はありません");
+
+const norm = s => s.toLowerCase().replace(/[^a-z]/g, "");
+function toBlob() { return new Promise(res => cv.toBlob(res, "image/png")); }
+
+// ---- ┉　正解・不正解の演出（大きな○/×と効果音） ----
+let actx = null;
+function unlockAudio() {
+  try {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+  } catch (e) {}
+}
+function tone(freq, start, dur, type, vol) {
+  const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + start;
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur + 0.05);
+}
+function playSound(ok) {
+  unlockAudio(); if (!actx) return;
+  try {
+    if (ok) { // ピンポーン
+      tone(1319, 0, 0.2, "sine", 0.35); tone(2638, 0, 0.2, "sine", 0.06);
+      tone(1047, 0.18, 0.7, "sine", 0.35); tone(2094, 0.18, 0.7, "sine", 0.06);
+    } else { // ブッブー
+      tone(150, 0, 0.22, "square", 0.16); tone(150, 0.3, 0.5, "square", 0.16);
+    }
+  } catch (e) {}
+}
+function flash(ok, ans) {
+  const m = $("mark");
+  m.innerHTML = ok
+    ? '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="#e5383b" stroke-width="12"/></svg>'
+    : '<svg viewBox="0 0 100 100"><path d="M18 18L82 82M82 18L18 82" stroke="#2f6fed" stroke-width="13" stroke-linecap="round"/></svg>';
+  if (!ok && ans) { const a = document.createElement("div"); a.className = "ans"; a.textContent = ans; m.prepend(a); }
+  m.classList.toggle("wrong", !ok);
+  m.classList.remove("show"); void m.offsetWidth; m.classList.add("show");
+  playSound(ok);
+}
+// ---- 自己採点モード（Claudeにログインしていないとき・手動でも選べる） ----
+let pending = false;
+function isSelf() { return !sample || $("selfOn").checked; }
+function applyMode() {
+  const self = isSelf();
+  $("grade").classList.toggle("hidden", self);
+  $("actRow").style.gridTemplateColumns = self ? "1fr" : "";
+  $("reveal").textContent = self ? "答えを見て自己採点" : "答えを見る";
+  $("note").textContent = self
+    ? "自己採点モードです。書いたあと「答えを見て自己採点」を押し、自分で○×を選んでください。"
+    : "枠内に英単語を大きく書いてください。Apple Pencilで書けます。採点にはClaudeを使います（初回に許可の確認が出ます）。";
+}
+try { $("selfOn").checked = localStorage.getItem("wwt-self") === "1"; } catch (e) {}
+$("selfOn").onchange = () => { try { localStorage.setItem("wwt-self", $("selfOn").checked ? "1" : "0"); } catch (e) {} applyMode(); };
+function selfReveal() {
+  const w = list[idx];
+  pending = true; graded = true; setBtns();
+  $("fb").innerHTML = '正しい綴り：<b class="big"></b><br><span class="cap2">自分の手書きと見比べて、判定を選んでください</span>';
+  $("fb").querySelector("b").textContent = w.en;
+  $("afterRow").classList.remove("hidden"); $("actRow").classList.add("hidden");
+  $("override").classList.remove("hidden"); $("override").disabled = false; $("markWrong").disabled = false;
+  $("next").disabled = true; $("next").textContent = idx + 1 < list.length ? "次へ" : "結果を見る";
+}
+function choose(ok) { pending = false; record(ok, "（自己採点）"); }
+function record(ok, read) {
+  const w = list[idx];
+  results[idx] = { en: w.en, ja: w.ja, read, ok, bid: w.bid, before: getMiss(w.bid).find(x => x.en === w.en) || null };
+  updateMiss(w, ok); addStat(ok ? 1 : 0, 1, w.bid); flash(ok, w.en);
+  graded = true; setBtns();
+  $("fb").innerHTML = (ok ? '<span class="ok">○ 正解！</span>' : '<span class="ng">× 不正解</span>') +
+    '<br>読み取り結果：<b></b><br>正しい綴り：<b></b>';
+  const bs = $("fb").querySelectorAll("b");
+  bs[0].textContent = read || "（読み取れませんでした）"; bs[1].textContent = w.en;
+  $("afterRow").classList.remove("hidden"); $("actRow").classList.add("hidden");
+  $("override").classList.remove("hidden"); $("override").disabled = ok; $("markWrong").disabled = !ok; $("next").disabled = false;
+  $("next").textContent = idx + 1 < list.length ? "次へ" : "結果を見る";
+}
+$("grade").onclick = async () => {
+  if (!active || graded) return;
+  if (!strokes.length) { $("fb").textContent = "先に単語を書いてください。"; return; }
+  if (!sample) { $("fb").textContent = "手書き認識が使えない環境です。"; return; }
+  unlockAudio(); $("grade").disabled = true; $("fb").textContent = "読み取り中…";
+  try {
+    const blob = await toBlob();
+    const r = await sample.json(
+      "添付画像は、英単語を手書きした白地の画像です。書かれている文字を、見えたとおり正確に読み取ってください。" +
+      "綴りが間違っていても絶対に直さず、書かれた通りに出力すること。読めない文字は ? にする。" +
+      "出力はJSONのみ: {\"text\":\"読み取った文字列\"}",
+      { images: [blob], modelTier: "quick", cache: false }
+    );
+    const read = String((r && r.text) || "").trim();
+    record(norm(read) === norm(list[idx].en), read);
+  } catch (e) {
+    $("grade").disabled = false;
+    $("fb").textContent = e && e.code === "not_granted" ? (sample = null, applyMode(), "Claudeの利用が許可されなかったため、自己採点モードに切り替えました。「答えを見て自己採点」を押してください。")
+      : e && e.code === "rate_limited" ? "少し待ってからもう一度押してください。" : "採点に失敗しました。もう一度試してください。";
+  }
+};
+$("reveal").onclick = () => {
+  if (!(active && !graded)) return;
+  if (isSelf()) selfReveal(); else record(false, "（答えを見た）");
+};
+// 採点結果を手動で切り替える（正解↔不正解）
+function setResult(ok) {
+  const r = results[idx];
+  if (!r || r.ok === ok) return;
+  r.ok = ok;
+  setMiss(getMiss(r.bid).filter(x => x.en !== r.en).concat(r.before ? [r.before] : []), r.bid);
+  updateMiss(r, ok); addStat(ok ? 1 : -1, 0, r.bid); flash(ok, r.en);
+  $("fb").innerHTML = ok ? '<span class="ok">○ 正解に変更しました</span>'
+    : '<span class="ng">× 不正解に変更しました</span><br>正しい綴り：<b></b>';
+  if (!ok) $("fb").querySelector("b").textContent = r.en;
+  $("override").disabled = ok; $("markWrong").disabled = !ok;
+}
+$("override").onclick = () => pending ? choose(true) : setResult(true);
+$("markWrong").onclick = () => pending ? choose(false) : setResult(false);
+$("next").onclick = () => { if (idx + 1 < list.length) { idx++; loadWord(); } else finish(); };
+function finish() {
+  active = false;
+  const n = results.filter(r => r.ok).length;
+  $("lastScore").textContent = n + " / " + results.length + "（" + Math.round(100 * n / results.length) + "点）";
+  const t = $("tbl"); t.innerHTML = "<tr><th></th><th>意味</th><th>正解</th><th>あなたの答え</th></tr>";
+  results.forEach(r => {
+    const tr = document.createElement("tr");
+    [r.ok ? "○" : "×", r.ja, r.en, r.read].forEach((v, i) => {
+      const td = document.createElement("td"); td.textContent = v;
+      if (i === 0) td.className = r.ok ? "ok" : "ng";
+      tr.appendChild(td);
+    });
+    t.appendChild(tr);
+  });
+  $("noLast").classList.add("hidden"); $("lastBox").classList.remove("hidden");
+  $("retryMiss").classList.toggle("hidden", n === results.length);
+  idleCard(); $("sub").textContent = "テスト終了 " + n + " / " + results.length;
+  tab("stats");
+}
+$("retryMiss").onclick = () => begin(results.filter(r => !r.ok).map(r => ({ en: r.en, ja: r.ja, bid: r.bid })), "", mode);
+
+// ---- review list (spaced repetition, per book) ----
+function getMiss(id) { try { return JSON.parse(localStorage.getItem(missKey(id)) || "[]"); } catch (e) { return []; } }
+function setMiss(a, id) { try { localStorage.setItem(missKey(id), JSON.stringify(a)); } catch (e) {} }
+// 忘却曲線に沿った復習間隔: 10分 → 1日 → 2日 → 4日 → 7日 → 15日 → 30日（最後をクリアするとリストから卒業）
+const DAY = 864e5, IV = [10 * 60e3, DAY, 2 * DAY, 4 * DAY, 7 * DAY, 15 * DAY, 30 * DAY];
+function isDue(w) { return (w.due || 0) <= Date.now(); }
+function dueText(w) {
+  const d = (w.due || 0) - Date.now();
+  if (d <= 0) return "復習する時間";
+  if (d < 3600e3) return "あと" + Math.ceil(d / 60e3) + "分";
+  if (d < DAY) return "あと" + Math.ceil(d / 3600e3) + "時間";
+  return "あと" + Math.ceil(d / DAY) + "日";
+}
+function updateMiss(w, ok) {
+  const m = getMiss(w.bid), i = m.findIndex(x => x.en === w.en), now = Date.now();
+  if (!ok) {
+    const item = { en: w.en, ja: w.ja, stage: 0, due: now + IV[0] };
+    if (i >= 0) m[i] = item; else m.push(item);
+  } else if (i >= 0 && isDue(m[i])) {
+    const s = (m[i].stage || 0) + 1;
+    if (s >= IV.length) m.splice(i, 1); else { m[i].stage = s; m[i].due = now + IV[s]; }
+  }
+  setMiss(m, w.bid);
+}
+function renderReview() {
+  refreshReviewBtn();
+  const m = getMiss(), box = $("reviewBox");
+  box.innerHTML = "";
+  if (!m.length) { box.innerHTML = '<div class="note">復習する単語はありません。</div>'; return; }
+  const dueN = m.filter(isDue).length;
+  const h = document.createElement("div");
+  h.className = "note"; h.style.marginTop = "0";
+  h.textContent = m.length + "語（復習の時間：" + dueN + "語）　間隔：10分 → 1日 → 2日 → 4日 → 7日 → 15日 → 30日。正解で次へ、間違えると最初から。";
+  box.appendChild(h);
+  m.forEach(w => {
+    const row = document.createElement("div"); row.className = "miss-item";
+    const t = document.createElement("span"); t.textContent = w.en + " — " + w.ja + "（" + dueText(w) + "）";
+    const b = document.createElement("button"); b.textContent = "覚えた";
+    b.onclick = () => { setMiss(getMiss().filter(x => x.en !== w.en)); renderReview(); };
+    row.append(t, b); box.appendChild(row);
+  });
+  const r = document.createElement("div"); r.className = "two"; r.style.marginTop = "12px";
+  const go = document.createElement("button"); go.className = "primary";
+  go.textContent = "復習の時間の単語をテスト（" + dueN + "語）"; go.disabled = !dueN;
+  go.onclick = () => begin(getMiss().filter(isDue));
+  const clr = document.createElement("button"); clr.textContent = "リストを空にする";
+  clr.onclick = () => { if (clr.dataset.armed) { setMiss([]); renderReview(); } else { clr.dataset.armed = "1"; clr.textContent = "もう一度押すと空にします"; } };
+  r.append(go, clr); box.appendChild(r);
+}
+
+loadBooks(); renderBooks(); idleCard(); renderReview(); redraw(); applyMode();
+</script>
+</body>
+</html>
